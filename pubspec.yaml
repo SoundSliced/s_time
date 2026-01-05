@@ -1,5 +1,5 @@
 name: s_time
-description: A Flutter package for s_time functionality
+description: A comprehensive Flutter package for intuitive time selection with two powerful widgets - TimeSpinner for wheel-based selection and TimeInput for text-based input.
 issue_tracker: https://github.com/SoundSliced/s_time/issues
 repository: https://github.com/SoundSliced/s_time
 version: 1.0.0
@@ -10,20 +10,19 @@ environment:
   flutter: ">=3.0.0"
 
 dependencies:
+  assorted_layout_widgets: ^11.0.0
+  dart_helper_utils: ^5.4.1
   flutter:
     sdk: flutter
-  s_ink_button: ^1.1.0
-  soundsliced_dart_extensions: ^1.0.1
-  assorted_layout_widgets: ^11.0.0
-  s_widgets: ^1.0.1
   keystroke_listener: ^1.0.1
-  dart_helper_utils: ^5.4.1
-
+  s_ink_button: ^1.1.0
+  s_widgets: ^1.0.1
+  soundsliced_dart_extensions: ^1.0.1
 
 dev_dependencies:
+  flutter_lints: ^6.0.0
   flutter_test:
     sdk: flutter
-  flutter_lints: ^6.0.0
 
 flutter:
   uses-material-design: true

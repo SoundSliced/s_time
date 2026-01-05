@@ -97,6 +97,24 @@ class TimeTextEditingController extends TextEditingController {
 /// - Optimized performance with static regex patterns and character code checks
 /// - Cleaner separation of concerns between input and display formatting
 class TimeInput extends StatefulWidget {
+
+  const TimeInput({
+    required this.title, required this.onSubmitted, super.key,
+    this.time,
+    this.defaultTime,
+    this.isUtc = true,
+    this.autoFocus = false,
+    this.replaceAllTextOnAutoFocus = false,
+    this.onChanged,
+    this.inputDecoration,
+    this.colorPerTitle,
+    this.contentPadding,
+    this.inputFontSize,
+    this.borderRadius,
+    this.isEmptyWhenTimeNull = false,
+    this.showClearButton = false,
+    this.focusRole,
+  });
   /// The label text displayed above the input field
   final String title;
 
@@ -136,26 +154,6 @@ class TimeInput extends StatefulWidget {
   /// Optional role string used to tag the internal FocusNode for traversal policies.
   final String? focusRole;
 
-  const TimeInput({
-    super.key,
-    required this.title,
-    this.time,
-    required this.onSubmitted,
-    this.defaultTime,
-    this.isUtc = true,
-    this.autoFocus = false,
-    this.replaceAllTextOnAutoFocus = false,
-    this.onChanged,
-    this.inputDecoration,
-    this.colorPerTitle,
-    this.contentPadding,
-    this.inputFontSize,
-    this.borderRadius,
-    this.isEmptyWhenTimeNull = false,
-    this.showClearButton = false,
-    this.focusRole,
-  });
-
   @override
   State<TimeInput> createState() => _TimeInputState();
 }
@@ -168,7 +166,7 @@ class _TimeInputState extends State<TimeInput> {
   late final RoleFocusNode _focusNode;
 
   /// Stores the original digits-only value when focus is gained (for Escape key)
-  String _originalValue = "";
+  String _originalValue = '';
 
   /// Prevents recursive formatting calls during text updates
   bool _isFormatting = false;
@@ -182,7 +180,7 @@ class _TimeInputState extends State<TimeInput> {
   // Replaced deprecated RegExp with manual contains checks via helper
   static bool _containsFormatChars(String text) {
     // return true if any of ':' or 'z' present
-    for (int i = 0; i < text.length; i++) {
+    for (var i = 0; i < text.length; i++) {
       final c = text.codeUnitAt(i);
       if (c == 58 /* ':' */ || c == 122 /* 'z' */) return true;
     }
@@ -196,7 +194,7 @@ class _TimeInputState extends State<TimeInput> {
     // first, format the given time or now time, to "HH:MM z" for display
 
     final initialText = (widget.isEmptyWhenTimeNull && widget.time == null)
-        ? ""
+        ? ''
         : TimeInputControllers.formatTimeInput(
             (widget.time ?? defaultTime)
                 .convertToStringTime(showSeparatorSymbol: false),
@@ -332,8 +330,7 @@ class _TimeInputState extends State<TimeInput> {
     // Check if field is empty and should return null
     if (widget.isEmptyWhenTimeNull && tfc.text.trim().isEmpty) {
       // Keep the field empty and notify with null
-      tfc.value = TextEditingValue(
-        text: "",
+      tfc.value = const TextEditingValue(
         selection: TextSelection.collapsed(offset: 0),
       );
       widget.onSubmitted(null);
@@ -397,12 +394,11 @@ class _TimeInputState extends State<TimeInput> {
   /// If input is empty, uses current time as default.
   /// Formats the input and unfocuses the field.
   void _handleEnterKey() {
-    String input = tfc.text.trim();
+    var input = tfc.text.trim();
 
     // Check if field is empty and should return null
     if (widget.isEmptyWhenTimeNull && input.isEmpty) {
-      tfc.value = TextEditingValue(
-        text: "",
+      tfc.value = const TextEditingValue(
         selection: TextSelection.collapsed(offset: 0),
       );
       _focusNode.unfocus();
@@ -509,12 +505,12 @@ class _TimeInputState extends State<TimeInput> {
     if (tapPosition <= 0) return 0;
     if (formattedText.isEmpty) return 0;
 
-    int digitCount = 0;
+    var digitCount = 0;
     final endIndex =
         tapPosition < formattedText.length ? tapPosition : formattedText.length;
 
     // Count digits using character code for better performance
-    for (int i = 0; i < endIndex; i++) {
+    for (var i = 0; i < endIndex; i++) {
       final charCode = formattedText.codeUnitAt(i);
       if (charCode >= 48 && charCode <= 57) {
         // '0' to '9'
@@ -567,7 +563,7 @@ class _TimeInputState extends State<TimeInput> {
     super.didUpdateWidget(oldWidget);
 
     final timeText = (widget.isEmptyWhenTimeNull && widget.time == null)
-        ? ""
+        ? ''
         : TimeInputControllers.formatTimeInput(
             (widget.time ?? defaultTime)
                 .convertToStringTime(showSeparatorSymbol: false),
@@ -592,8 +588,7 @@ class _TimeInputState extends State<TimeInput> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Box(
+  Widget build(BuildContext context) => Box(
       height: 80,
       // alignment: Alignment.center,
       child: TextFormField(
@@ -634,41 +629,36 @@ class _TimeInputState extends State<TimeInput> {
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(widget.borderRadius ?? 12),
-                borderSide: BorderSide(
+                borderSide: const BorderSide(
                   color: Colors.blueAccent,
-                  width: 1,
                 ),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(widget.borderRadius ?? 12),
-                borderSide: BorderSide(
+                borderSide: const BorderSide(
                   color: Colors.blue,
-                  width: 1,
                 ),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(widget.borderRadius ?? 12),
                 borderSide: BorderSide(
                   color: Colors.grey[300]!,
-                  width: 1,
                 ),
               ),
               errorBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(widget.borderRadius ?? 12),
-                borderSide: BorderSide(
+                borderSide: const BorderSide(
                   color: Colors.red,
-                  width: 1,
                 ),
               ),
               focusedErrorBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(widget.borderRadius ?? 12),
-                borderSide: BorderSide(
+                borderSide: const BorderSide(
                   color: Colors.redAccent,
-                  width: 1,
                 ),
               ),
               contentPadding: widget.contentPadding ??
-                  EdgeInsets.symmetric(vertical: 5, horizontal: 5),
+                  const EdgeInsets.symmetric(vertical: 5, horizontal: 5),
               suffixIcon: widget.showClearButton
                   ? TextFormFieldClearButton(onPressed: () {
                       // Clear the text field and notify with null
@@ -685,7 +675,6 @@ class _TimeInputState extends State<TimeInput> {
             ),
       ),
     );
-  }
 }
 
 //********************************* */
@@ -704,8 +693,8 @@ class TimeInputControllers {
   // Manual digit filtering replacing deprecated RegExp
   static String _removeNonDigits(String input) {
     if (input.isEmpty) return input;
-    final StringBuffer buf = StringBuffer();
-    for (int i = 0; i < input.length; i++) {
+    final buf = StringBuffer();
+    for (var i = 0; i < input.length; i++) {
       final c = input.codeUnitAt(i);
       if (c >= 48 && c <= 57) {
         // '0'-'9'
@@ -852,18 +841,18 @@ class TimeInputControllers {
       (DateTime?, TimeOfDay?) defaultTime = const (null, null)}) {
     final dfT =
         defaultTime.$1 ?? (isUtc ? DateTime.now().toUtc() : DateTime.now());
-    TimeOfDay timeOfDay = TimeOfDay(hour: dfT.hour, minute: dfT.minute);
+    var timeOfDay = TimeOfDay(hour: dfT.hour, minute: dfT.minute);
 
-    if (timeString != "null" && timeString.isNotEmpty) {
+    if (timeString != 'null' && timeString.isNotEmpty) {
       // Remove the 'z' suffix and trim any whitespace
       timeString = timeString.replaceAll(' z', '').trim();
 
       // Split the string into hours and minutes
-      List<String> parts = timeString.split(':');
+      final parts = timeString.split(':');
 
       if (parts.length == 2) {
-        int? hours = int.tryParse(parts[0]);
-        int? minutes = int.tryParse(parts[1]);
+        var hours = int.tryParse(parts[0]);
+        var minutes = int.tryParse(parts[1]);
 
         // Validate hours and minutes
         if (hours == null || hours < 0 || hours > 23) {
@@ -965,10 +954,10 @@ class TimeInputFormatter extends TextInputFormatter {
     // If the text length increased (insertion), use the new cursor position
     if (newDigits.length > oldDigits.length) {
       // For insertions, count digits before cursor position in new value
-      int digitsBefore = 0;
+      var digitsBefore = 0;
       final cursorPos = newValue.selection.baseOffset;
 
-      for (int i = 0; i < cursorPos && i < newValue.text.length; i++) {
+      for (var i = 0; i < cursorPos && i < newValue.text.length; i++) {
         final charCode = newValue.text.codeUnitAt(i);
         if (charCode >= 48 && charCode <= 57) {
           // '0' to '9'
@@ -981,10 +970,10 @@ class TimeInputFormatter extends TextInputFormatter {
 
     // For deletions/backspace, we need to be more careful
     // Count digits before the cursor in the old value
-    int oldDigitsBefore = 0;
+    var oldDigitsBefore = 0;
     final oldCursorPos = oldValue.selection.baseOffset;
 
-    for (int i = 0; i < oldCursorPos && i < oldValue.text.length; i++) {
+    for (var i = 0; i < oldCursorPos && i < oldValue.text.length; i++) {
       final charCode = oldValue.text.codeUnitAt(i);
       if (charCode >= 48 && charCode <= 57) {
         // '0' to '9'

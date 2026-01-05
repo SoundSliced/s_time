@@ -5,7 +5,7 @@ import 'package:s_time/s_time.dart';
 void main() {
   group('TimeOfDayExtension', () {
     test('toDateTime converts TimeOfDay to DateTime with default date', () {
-      final timeOfDay = const TimeOfDay(hour: 14, minute: 30);
+      const timeOfDay = TimeOfDay(hour: 14, minute: 30);
       final dateTime = timeOfDay.toDateTime();
 
       expect(dateTime.hour, 14);
@@ -13,7 +13,7 @@ void main() {
     });
 
     test('toDateTime converts TimeOfDay to DateTime with custom date', () {
-      final timeOfDay = const TimeOfDay(hour: 10, minute: 15);
+      const timeOfDay = TimeOfDay(hour: 10, minute: 15);
       final customDate = DateTime(2024, 6, 15);
       final dateTime = timeOfDay.toDateTime(date: customDate);
 
@@ -25,17 +25,17 @@ void main() {
     });
 
     test('toDateTime with isUtc parameter', () {
-      final timeOfDay = const TimeOfDay(hour: 14, minute: 30);
-      final dateTime = timeOfDay.toDateTime(isUtc: true);
+      const timeOfDay = TimeOfDay(hour: 14, minute: 30);
+      final dateTime = timeOfDay.toDateTime();
 
       expect(dateTime.hour, 14);
       expect(dateTime.minute, 30);
     });
 
     test('toDateTime with both date and isUtc parameters', () {
-      final timeOfDay = const TimeOfDay(hour: 9, minute: 45);
+      const timeOfDay = TimeOfDay(hour: 9, minute: 45);
       final customDate = DateTime.utc(2025, 1, 5);
-      final dateTime = timeOfDay.toDateTime(date: customDate, isUtc: true);
+      final dateTime = timeOfDay.toDateTime(date: customDate);
 
       expect(dateTime.year, 2025);
       expect(dateTime.month, 1);
@@ -57,13 +57,12 @@ void main() {
     });
 
     test('custom style can be created with specific values', () {
-      final textStyle =
-          const TextStyle(fontSize: 16, fontWeight: FontWeight.bold);
-      final selectedColor = Colors.blue;
-      final borderColor = Colors.red;
-      final constraints = const BoxConstraints(minWidth: 60, minHeight: 50);
+      const textStyle = TextStyle(fontSize: 16, fontWeight: FontWeight.bold);
+      const selectedColor = Colors.blue;
+      const borderColor = Colors.red;
+      const constraints = BoxConstraints(minWidth: 60, minHeight: 50);
 
-      final style = AmPmButtonStyle(
+      const style = AmPmButtonStyle(
         textStyle: textStyle,
         selectedColor: selectedColor,
         borderColor: borderColor,
@@ -80,8 +79,7 @@ void main() {
   });
 
   group('TimeSpinner Widget', () {
-    testWidgets('TimeSpinner renders with default properties',
-        (WidgetTester tester) async {
+    testWidgets('TimeSpinner renders with default properties', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -96,7 +94,7 @@ void main() {
     });
 
     testWidgets('TimeSpinner calls onChangedSelectedTime callback',
-        (WidgetTester tester) async {
+        (tester) async {
       TimeOfDay? changedTime;
 
       await tester.pumpWidget(
@@ -117,13 +115,12 @@ void main() {
     });
 
     testWidgets('TimeSpinner displays with 12-hour format by default',
-        (WidgetTester tester) async {
+        (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
             body: TimeSpinner(
               initTime: const TimeOfDay(hour: 14, minute: 30),
-              is24HourFormat: false,
               onChangedSelectedTime: (time) {},
             ),
           ),
@@ -133,8 +130,7 @@ void main() {
       expect(find.byType(TimeSpinner), findsOneWidget);
     });
 
-    testWidgets('TimeSpinner displays with 24-hour format',
-        (WidgetTester tester) async {
+    testWidgets('TimeSpinner displays with 24-hour format', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -150,8 +146,7 @@ void main() {
       expect(find.byType(TimeSpinner), findsOneWidget);
     });
 
-    testWidgets('TimeSpinner with custom hour values',
-        (WidgetTester tester) async {
+    testWidgets('TimeSpinner with custom hour values', (tester) async {
       final customHours = List.generate(12, (i) => i * 2); // 0, 2, 4, ..., 22
 
       await tester.pumpWidget(
@@ -169,8 +164,7 @@ void main() {
       expect(find.byType(TimeSpinner), findsOneWidget);
     });
 
-    testWidgets('TimeSpinner with custom minute values',
-        (WidgetTester tester) async {
+    testWidgets('TimeSpinner with custom minute values', (tester) async {
       const customMinutes = [0, 15, 30, 45];
 
       await tester.pumpWidget(
@@ -188,8 +182,7 @@ void main() {
       expect(find.byType(TimeSpinner), findsOneWidget);
     });
 
-    testWidgets('TimeSpinner with discarded hours',
-        (WidgetTester tester) async {
+    testWidgets('TimeSpinner with discarded hours', (tester) async {
       const discardedHours = [13, 14, 15, 16, 17]; // Lunch break
 
       await tester.pumpWidget(
@@ -207,8 +200,7 @@ void main() {
       expect(find.byType(TimeSpinner), findsOneWidget);
     });
 
-    testWidgets('TimeSpinner with discarded minutes',
-        (WidgetTester tester) async {
+    testWidgets('TimeSpinner with discarded minutes', (tester) async {
       const discardedMinutes = [5, 35, 55];
 
       await tester.pumpWidget(
@@ -226,8 +218,7 @@ void main() {
       expect(find.byType(TimeSpinner), findsOneWidget);
     });
 
-    testWidgets('TimeSpinner respects custom styling',
-        (WidgetTester tester) async {
+    testWidgets('TimeSpinner respects custom styling', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -242,7 +233,6 @@ void main() {
                 fontSize: 20,
                 color: Colors.grey,
               ),
-              spinnerBgColor: const Color(0xFFF5F5F5),
               borderRadius: BorderRadius.circular(16),
               onChangedSelectedTime: (time) {},
             ),
@@ -253,8 +243,7 @@ void main() {
       expect(find.byType(TimeSpinner), findsOneWidget);
     });
 
-    testWidgets('TimeSpinner with custom dimensions',
-        (WidgetTester tester) async {
+    testWidgets('TimeSpinner with custom dimensions', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -272,15 +261,13 @@ void main() {
       expect(find.byType(TimeSpinner), findsOneWidget);
     });
 
-    testWidgets('TimeSpinner with AM/PM button styling',
-        (WidgetTester tester) async {
+    testWidgets('TimeSpinner with AM/PM button styling', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
             body: TimeSpinner(
               initTime: const TimeOfDay(hour: 10, minute: 30),
-              is24HourFormat: false,
-              am_pmButtonStyle: AmPmButtonStyle(
+              amPmButtonStyle: AmPmButtonStyle(
                 textStyle:
                     const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                 selectedColor: Colors.blue.withValues(alpha: 0.2),
@@ -295,14 +282,12 @@ void main() {
       expect(find.byType(TimeSpinner), findsOneWidget);
     });
 
-    testWidgets('TimeSpinner with showNoSelectionDots true',
-        (WidgetTester tester) async {
+    testWidgets('TimeSpinner with showNoSelectionDots true', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
             body: TimeSpinner(
               initTime: const TimeOfDay(hour: 10, minute: 30),
-              showNoSelectionDots: true,
               onChangedSelectedTime: (time) {},
             ),
           ),
@@ -312,8 +297,7 @@ void main() {
       expect(find.byType(TimeSpinner), findsOneWidget);
     });
 
-    testWidgets('TimeSpinner with showNoSelectionDots false',
-        (WidgetTester tester) async {
+    testWidgets('TimeSpinner with showNoSelectionDots false', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -331,8 +315,7 @@ void main() {
   });
 
   group('TimeInput Widget', () {
-    testWidgets('TimeInput renders with basic properties',
-        (WidgetTester tester) async {
+    testWidgets('TimeInput renders with basic properties', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -348,8 +331,7 @@ void main() {
       expect(find.text('Start Time'), findsOneWidget);
     });
 
-    testWidgets('TimeInput displays with initial time',
-        (WidgetTester tester) async {
+    testWidgets('TimeInput displays with initial time', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -365,14 +347,12 @@ void main() {
       expect(find.byType(TimeInput), findsOneWidget);
     });
 
-    testWidgets('TimeInput with null initial time',
-        (WidgetTester tester) async {
+    testWidgets('TimeInput with null initial time', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
             body: TimeInput(
               title: 'Optional Time',
-              time: null,
               onSubmitted: (time) {},
             ),
           ),
@@ -382,8 +362,7 @@ void main() {
       expect(find.byType(TimeInput), findsOneWidget);
     });
 
-    testWidgets('TimeInput with auto-focus enabled',
-        (WidgetTester tester) async {
+    testWidgets('TimeInput with auto-focus enabled', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -400,7 +379,7 @@ void main() {
     });
 
     testWidgets('TimeInput with replaceAllTextOnAutoFocus true',
-        (WidgetTester tester) async {
+        (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -418,14 +397,12 @@ void main() {
       expect(find.byType(TimeInput), findsOneWidget);
     });
 
-    testWidgets('TimeInput with isEmptyWhenTimeNull true',
-        (WidgetTester tester) async {
+    testWidgets('TimeInput with isEmptyWhenTimeNull true', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
             body: TimeInput(
               title: 'Nullable Time',
-              time: null,
               isEmptyWhenTimeNull: true,
               onSubmitted: (time) {},
             ),
@@ -436,7 +413,7 @@ void main() {
       expect(find.byType(TimeInput), findsOneWidget);
     });
 
-    testWidgets('TimeInput with clear button', (WidgetTester tester) async {
+    testWidgets('TimeInput with clear button', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -453,14 +430,12 @@ void main() {
       expect(find.byType(TimeInput), findsOneWidget);
     });
 
-    testWidgets('TimeInput with default time fallback',
-        (WidgetTester tester) async {
+    testWidgets('TimeInput with default time fallback', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
             body: TimeInput(
               title: 'Default Time',
-              time: null,
               defaultTime: const TimeOfDay(hour: 9, minute: 0),
               onSubmitted: (time) {},
             ),
@@ -472,14 +447,13 @@ void main() {
     });
 
     testWidgets('TimeInput with UTC time enabled (isUtc: true)',
-        (WidgetTester tester) async {
+        (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
             body: TimeInput(
               title: 'UTC Time',
               time: DateTime.now().toUtc(),
-              isUtc: true,
               onSubmitted: (time) {},
             ),
           ),
@@ -490,7 +464,7 @@ void main() {
     });
 
     testWidgets('TimeInput with local time enabled (isUtc: false)',
-        (WidgetTester tester) async {
+        (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -507,8 +481,7 @@ void main() {
       expect(find.byType(TimeInput), findsOneWidget);
     });
 
-    testWidgets('TimeInput with custom color per title',
-        (WidgetTester tester) async {
+    testWidgets('TimeInput with custom color per title', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -525,7 +498,7 @@ void main() {
       expect(find.byType(TimeInput), findsOneWidget);
     });
 
-    testWidgets('TimeInput with custom font size', (WidgetTester tester) async {
+    testWidgets('TimeInput with custom font size', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -542,8 +515,7 @@ void main() {
       expect(find.byType(TimeInput), findsOneWidget);
     });
 
-    testWidgets('TimeInput with custom border radius',
-        (WidgetTester tester) async {
+    testWidgets('TimeInput with custom border radius', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -560,8 +532,7 @@ void main() {
       expect(find.byType(TimeInput), findsOneWidget);
     });
 
-    testWidgets('TimeInput with custom content padding',
-        (WidgetTester tester) async {
+    testWidgets('TimeInput with custom content padding', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -579,8 +550,7 @@ void main() {
       expect(find.byType(TimeInput), findsOneWidget);
     });
 
-    testWidgets('TimeInput with custom InputDecoration',
-        (WidgetTester tester) async {
+    testWidgets('TimeInput with custom InputDecoration', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -604,8 +574,7 @@ void main() {
       expect(find.byType(TimeInput), findsOneWidget);
     });
 
-    testWidgets('TimeInput calls onSubmitted callback',
-        (WidgetTester tester) async {
+    testWidgets('TimeInput calls onSubmitted callback', (tester) async {
       // ignore: unused_local_variable
       TimeOfDay? submittedTime;
 
@@ -627,7 +596,7 @@ void main() {
     });
 
     testWidgets('TimeInput calls onChanged callback when provided',
-        (WidgetTester tester) async {
+        (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -648,8 +617,7 @@ void main() {
   });
 
   group('Integration Tests', () {
-    testWidgets('TimeSpinner and TimeInput in same screen',
-        (WidgetTester tester) async {
+    testWidgets('TimeSpinner and TimeInput in same screen', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -674,8 +642,7 @@ void main() {
       expect(find.byType(TimeInput), findsOneWidget);
     });
 
-    testWidgets('Multiple TimeInput widgets in a column',
-        (WidgetTester tester) async {
+    testWidgets('Multiple TimeInput widgets in a column', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -683,12 +650,12 @@ void main() {
               children: [
                 TimeInput(
                   title: 'Start Time',
-                  time: DateTime(2024, 1, 1, 9, 0),
+                  time: DateTime(2024, 1, 1, 9),
                   onSubmitted: (time) {},
                 ),
                 TimeInput(
                   title: 'End Time',
-                  time: DateTime(2024, 1, 1, 17, 0),
+                  time: DateTime(2024, 1, 1, 17),
                   onSubmitted: (time) {},
                 ),
               ],

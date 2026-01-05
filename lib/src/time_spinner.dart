@@ -6,13 +6,6 @@ import 'package:soundsliced_dart_extensions/soundsliced_dart_extensions.dart';
 
 /// Configuration for AM/PM toggle buttons styling
 class AmPmButtonStyle {
-  final TextStyle? textStyle;
-  final BoxConstraints? constraints;
-  final Color? selectedColor;
-  final Color? borderColor;
-  final double? borderWidth;
-  final BorderRadius? borderRadius;
-
   const AmPmButtonStyle({
     this.textStyle,
     this.constraints,
@@ -21,6 +14,12 @@ class AmPmButtonStyle {
     this.borderWidth,
     this.borderRadius,
   });
+  final TextStyle? textStyle;
+  final BoxConstraints? constraints;
+  final Color? selectedColor;
+  final Color? borderColor;
+  final double? borderWidth;
+  final BorderRadius? borderRadius;
 
   static const defaultStyle = AmPmButtonStyle(
     textStyle: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
@@ -31,6 +30,36 @@ class AmPmButtonStyle {
 }
 
 class TimeSpinner extends StatefulWidget {
+  // Styling for AM/PM buttons
+  const TimeSpinner({
+    required this.onChangedSelectedTime,
+    super.key,
+    this.initTime,
+    this.is24HourFormat = false,
+    this.spinnerHeight = 120,
+    this.spinnerWidth = 60,
+    this.elementsSpace = 8,
+    this.digitHeight = 40,
+    this.spinnerBgColor = const Color(0xFFF5F5F5),
+    this.selectedTextStyle = const TextStyle(
+      fontSize: 24,
+      fontWeight: FontWeight.bold,
+      color: Colors.blue,
+    ),
+    this.nonSelectedTextStyle = const TextStyle(
+      fontSize: 18,
+      color: Color(0xFFBDBDBD),
+    ),
+    this.hrValues,
+    this.minValues,
+    this.discardedHrValues = const [],
+    this.discardedMinValues = const [],
+    this.borderRadius,
+    this.spinnerBorder,
+    this.onKeyboardEditing,
+    this.showNoSelectionDots = true,
+    this.amPmButtonStyle,
+  });
   // Initialize parameters for the time picker
   final TimeOfDay? initTime; // Initial time value
   final bool is24HourFormat; // Indicates if the time format is 24-hour
@@ -52,36 +81,7 @@ class TimeSpinner extends StatefulWidget {
   final List<int> discardedHrValues;
   final List<int> discardedMinValues;
   final bool showNoSelectionDots;
-  final AmPmButtonStyle? am_pmButtonStyle; // Styling for AM/PM buttons
-  const TimeSpinner({
-    super.key,
-    this.initTime,
-    this.is24HourFormat = false,
-    this.spinnerHeight = 120,
-    this.spinnerWidth = 60,
-    this.elementsSpace = 8,
-    this.digitHeight = 40,
-    this.spinnerBgColor = const Color(0xFFF5F5F5),
-    this.selectedTextStyle = const TextStyle(
-      fontSize: 24,
-      fontWeight: FontWeight.bold,
-      color: Colors.blue,
-    ),
-    this.nonSelectedTextStyle = const TextStyle(
-      fontSize: 18,
-      color: Color(0xFFBDBDBD),
-    ),
-    required this.onChangedSelectedTime,
-    this.hrValues,
-    this.minValues,
-    this.discardedHrValues = const [],
-    this.discardedMinValues = const [],
-    this.borderRadius,
-    this.spinnerBorder,
-    this.onKeyboardEditing,
-    this.showNoSelectionDots = true,
-    this.am_pmButtonStyle,
-  });
+  final AmPmButtonStyle? amPmButtonStyle;
 
   @override
   State<TimeSpinner> createState() => _TimeSpinnerState();
@@ -139,31 +139,26 @@ class _TimeSpinnerState extends State<TimeSpinner> {
     super.didUpdateWidget(oldWidget);
 
     // Check if parameters that affect effective values have changed
-    bool needsValueUpdate = oldWidget.is24HourFormat != widget.is24HourFormat ||
-        oldWidget.hrValues != widget.hrValues ||
-        oldWidget.minValues != widget.minValues;
+    final needsValueUpdate =
+        oldWidget.is24HourFormat != widget.is24HourFormat ||
+            oldWidget.hrValues != widget.hrValues ||
+            oldWidget.minValues != widget.minValues;
 
     if (needsValueUpdate) {
-      setState(() {
-        _initializeEffectiveValues();
-      });
+      setState(_initializeEffectiveValues);
     }
 
     // Update time values if initTime changed
     if (oldWidget.initTime != widget.initTime && widget.initTime != null) {
-      setState(() {
-        _initializeTimeValues();
-      });
+      setState(_initializeTimeValues);
     }
   }
 
   // Get a list indicating which day period is selected
-  List<bool> get _isSelectedDayPeriod {
-    return switch (selectedDayPeriod) {
-      DayPeriod.am => [true, false], // AM is selected
-      DayPeriod.pm => [false, true], // PM is selected
-    };
-  }
+  List<bool> get _isSelectedDayPeriod => switch (selectedDayPeriod) {
+        DayPeriod.am => [true, false], // AM is selected
+        DayPeriod.pm => [false, true], // PM is selected
+      };
 
   @override
   Widget build(BuildContext context) {
@@ -256,7 +251,7 @@ class _TimeSpinnerState extends State<TimeSpinner> {
 
   // Build the day period selector toggle buttons
   ToggleButtons _dayPeriodSelector() {
-    final style = widget.am_pmButtonStyle ?? AmPmButtonStyle.defaultStyle;
+    final style = widget.amPmButtonStyle ?? AmPmButtonStyle.defaultStyle;
 
     return ToggleButtons(
       isSelected: _isSelectedDayPeriod,
@@ -287,71 +282,65 @@ class _TimeSpinnerState extends State<TimeSpinner> {
   }
 
   // Build the hour picker
-  MySpinnerNumericPicker _hourPicker() {
-    return MySpinnerNumericPicker(
-      maxValue: widget.is24HourFormat ? 24 : 12,
-      initValue: selectedHour,
-      height: widget.spinnerHeight,
-      width: widget.spinnerWidth,
-      digitHeight: widget.digitHeight,
-      nonSelectedTextStyle: widget.nonSelectedTextStyle,
-      selectedTextStyle: widget.selectedTextStyle,
-      spinnerBgColor: widget.spinnerBgColor,
-      borderRadius: widget.borderRadius,
-      spinnerBorder: widget.spinnerBorder,
-      values: _effectiveHrValues,
-      discardedValues: widget.discardedHrValues,
-      showNoSelectionDots: widget.showNoSelectionDots,
-      onSelectedItemChanged: (value) async {
-        setState(() {
-          selectedHour = value;
-        });
-        setSelectedTime();
-      },
-    );
-  }
+  MySpinnerNumericPicker _hourPicker() => MySpinnerNumericPicker(
+        maxValue: widget.is24HourFormat ? 24 : 12,
+        initValue: selectedHour,
+        height: widget.spinnerHeight,
+        width: widget.spinnerWidth,
+        digitHeight: widget.digitHeight,
+        nonSelectedTextStyle: widget.nonSelectedTextStyle,
+        selectedTextStyle: widget.selectedTextStyle,
+        spinnerBgColor: widget.spinnerBgColor,
+        borderRadius: widget.borderRadius,
+        spinnerBorder: widget.spinnerBorder,
+        values: _effectiveHrValues,
+        discardedValues: widget.discardedHrValues,
+        showNoSelectionDots: widget.showNoSelectionDots,
+        onSelectedItemChanged: (value) async {
+          setState(() {
+            selectedHour = value;
+          });
+          setSelectedTime();
+        },
+      );
 
   // Build the time separator between hour and minute pickers
-  SizedBox _timeSeparator(BuildContext context) {
-    return SizedBox(
-      width: widget.elementsSpace,
-      child: Center(
-        child: Text(
-          ':',
-          style: TextStyle(
-            fontSize: 25,
-            color: Theme.of(context).colorScheme.primary,
-            fontWeight: FontWeight.bold,
+  SizedBox _timeSeparator(BuildContext context) => SizedBox(
+        width: widget.elementsSpace,
+        child: Center(
+          child: Text(
+            ':',
+            style: TextStyle(
+              fontSize: 25,
+              color: Theme.of(context).colorScheme.primary,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
-      ),
-    );
-  }
+      );
 
   // Build the minute picker
-  MySpinnerNumericPicker _minutePicker() {
-    return MySpinnerNumericPicker(
-      initValue: selectedMinute,
-      maxValue: 60,
-      height: widget.spinnerHeight,
-      width: widget.spinnerWidth,
-      digitHeight: widget.digitHeight,
-      nonSelectedTextStyle: widget.nonSelectedTextStyle,
-      selectedTextStyle: widget.selectedTextStyle,
-      spinnerBgColor: widget.spinnerBgColor,
-      borderRadius: widget.borderRadius,
-      spinnerBorder: widget.spinnerBorder,
-      values: _effectiveMinValues,
-      discardedValues: widget.discardedMinValues,
-      showNoSelectionDots: false,
-      onSelectedItemChanged: (value) {
-        setState(() {
-          selectedMinute = value ?? 00;
-        });
-        setSelectedTime();
-      },
-    );
-  }
+  MySpinnerNumericPicker _minutePicker() => MySpinnerNumericPicker(
+        initValue: selectedMinute,
+        maxValue: 60,
+        height: widget.spinnerHeight,
+        width: widget.spinnerWidth,
+        digitHeight: widget.digitHeight,
+        nonSelectedTextStyle: widget.nonSelectedTextStyle,
+        selectedTextStyle: widget.selectedTextStyle,
+        spinnerBgColor: widget.spinnerBgColor,
+        borderRadius: widget.borderRadius,
+        spinnerBorder: widget.spinnerBorder,
+        values: _effectiveMinValues,
+        discardedValues: widget.discardedMinValues,
+        showNoSelectionDots: false,
+        onSelectedItemChanged: (value) {
+          setState(() {
+            selectedMinute = value ?? 00;
+          });
+          setSelectedTime();
+        },
+      );
 
   // Update the selected time based on user choices
   void setSelectedTime() {
@@ -366,6 +355,25 @@ class _TimeSpinnerState extends State<TimeSpinner> {
 
 //******************************** */
 class MySpinnerNumericPicker extends StatefulWidget {
+  // Add this parameter
+
+  const MySpinnerNumericPicker({
+    required this.maxValue,
+    required this.height,
+    required this.width,
+    required this.digitHeight,
+    required this.selectedTextStyle,
+    required this.nonSelectedTextStyle,
+    required this.onSelectedItemChanged,
+    required this.spinnerBgColor,
+    super.key,
+    this.initValue,
+    this.borderRadius,
+    this.spinnerBorder,
+    this.discardedValues = const [],
+    this.values,
+    this.showNoSelectionDots = true,
+  });
   final int? initValue;
   final int maxValue;
   final double height;
@@ -379,25 +387,7 @@ class MySpinnerNumericPicker extends StatefulWidget {
   final BoxBorder? spinnerBorder;
   final List<int> discardedValues;
   final List<int>? values;
-  final bool showNoSelectionDots; // Add this parameter
-
-  const MySpinnerNumericPicker({
-    super.key,
-    this.initValue,
-    required this.maxValue,
-    required this.height,
-    required this.width,
-    required this.digitHeight,
-    required this.selectedTextStyle,
-    required this.nonSelectedTextStyle,
-    required this.onSelectedItemChanged,
-    required this.spinnerBgColor,
-    this.borderRadius,
-    this.spinnerBorder,
-    this.discardedValues = const [],
-    this.values,
-    this.showNoSelectionDots = true,
-  });
+  final bool showNoSelectionDots;
 
   @override
   State<MySpinnerNumericPicker> createState() => _MySpinnerNumericPickerState();
@@ -443,7 +433,7 @@ class _MySpinnerNumericPickerState extends State<MySpinnerNumericPicker> {
     }
 
     // Initialize the scroll controller
-    int initialItemIndex = _calculateInitialItemIndex();
+    final initialItemIndex = _calculateInitialItemIndex();
     scrollController =
         FixedExtentScrollController(initialItem: initialItemIndex);
   }
@@ -456,7 +446,7 @@ class _MySpinnerNumericPickerState extends State<MySpinnerNumericPicker> {
       return 0; // Position of the dots or single value
     } else if (_selectedValue != null) {
       // Find the index of the initial value in the available values
-      int valueIndex = availableValues.indexOf(_selectedValue!);
+      final valueIndex = availableValues.indexOf(_selectedValue!);
       return loopMultiplier ~/ 2 * availableValues.length +
           (widget.showNoSelectionDots ? 1 : 0) +
           valueIndex;
@@ -470,7 +460,7 @@ class _MySpinnerNumericPickerState extends State<MySpinnerNumericPicker> {
     super.didUpdateWidget(oldWidget);
 
     // Check if parameters that affect the spinner have changed
-    bool needsRebuild = oldWidget.values != widget.values ||
+    final needsRebuild = oldWidget.values != widget.values ||
         oldWidget.discardedValues != widget.discardedValues ||
         oldWidget.maxValue != widget.maxValue ||
         oldWidget.showNoSelectionDots != widget.showNoSelectionDots;
@@ -479,10 +469,7 @@ class _MySpinnerNumericPickerState extends State<MySpinnerNumericPicker> {
       // Dispose old scroll controller
       scrollController.dispose();
 
-      setState(() {
-        // Reinitialize state with new parameters
-        _initializeState();
-      });
+      setState(_initializeState);
     } else if (oldWidget.initValue != widget.initValue &&
         widget.initValue != null) {
       // Only initValue changed, update selected value and scroll position
@@ -492,7 +479,7 @@ class _MySpinnerNumericPickerState extends State<MySpinnerNumericPicker> {
 
       // Jump to the new value if it exists in available values
       // Use addPostFrameCallback to avoid setState during build
-      if (_selectedValue != null && availableValues.contains(_selectedValue!)) {
+      if (_selectedValue != null && availableValues.contains(_selectedValue)) {
         final valueIndex = availableValues.indexOf(_selectedValue!);
         final targetIndex = loopMultiplier ~/ 2 * availableValues.length +
             (widget.showNoSelectionDots ? 1 : 0) +
@@ -513,85 +500,79 @@ class _MySpinnerNumericPickerState extends State<MySpinnerNumericPicker> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: widget.height,
-      width: widget.width,
-      decoration: BoxDecoration(
-        color: widget.spinnerBgColor,
-        borderRadius: widget.borderRadius ?? BorderRadius.circular(8),
-        border: widget.spinnerBorder ?? Border.all(),
-      ),
-      child: ListWheelScrollView.useDelegate(
-        controller: scrollController,
-        itemExtent: widget.digitHeight,
-        physics: const FixedExtentScrollPhysics(),
-        childDelegate: ListWheelChildBuilderDelegate(
-          builder: (context, index) {
+  Widget build(BuildContext context) => Container(
+        height: widget.height,
+        width: widget.width,
+        decoration: BoxDecoration(
+          color: widget.spinnerBgColor,
+          borderRadius: widget.borderRadius ?? BorderRadius.circular(8),
+          border: widget.spinnerBorder ?? Border.all(),
+        ),
+        child: ListWheelScrollView.useDelegate(
+          controller: scrollController,
+          itemExtent: widget.digitHeight,
+          physics: const FixedExtentScrollPhysics(),
+          childDelegate: ListWheelChildBuilderDelegate(
+            builder: (context, index) {
+              if (_showOnlyDots) {
+                return _buildDots();
+              } else if (_showOnlyOneValue) {
+                return _buildValueWidget(availableValues.first);
+              } else if (widget.showNoSelectionDots &&
+                  index % (availableValues.length + 1) == 0) {
+                return _buildDots();
+              } else {
+                final adjustedIndex = widget.showNoSelectionDots
+                    ? (index - 1) % availableValues.length
+                    : index % availableValues.length;
+                final value = availableValues[adjustedIndex];
+                return _buildValueWidget(value);
+              }
+            },
+            childCount: _showOnlyDots
+                ? 1
+                : _showOnlyOneValue
+                    ? 1
+                    : (availableValues.length +
+                            (widget.showNoSelectionDots ? 1 : 0)) *
+                        loopMultiplier,
+          ),
+          onSelectedItemChanged: (index) {
             if (_showOnlyDots) {
-              return _buildDots();
+              _updateSelectedValue(null);
             } else if (_showOnlyOneValue) {
-              return _buildValueWidget(availableValues.first);
+              _updateSelectedValue(availableValues.first);
             } else if (widget.showNoSelectionDots &&
                 index % (availableValues.length + 1) == 0) {
-              return _buildDots();
+              _updateSelectedValue(null);
             } else {
               final adjustedIndex = widget.showNoSelectionDots
                   ? (index - 1) % availableValues.length
                   : index % availableValues.length;
               final value = availableValues[adjustedIndex];
-              return _buildValueWidget(value);
+              _updateSelectedValue(value);
             }
           },
-          childCount: _showOnlyDots
-              ? 1
-              : _showOnlyOneValue
-                  ? 1
-                  : (availableValues.length +
-                          (widget.showNoSelectionDots ? 1 : 0)) *
-                      loopMultiplier,
         ),
-        onSelectedItemChanged: (index) {
-          if (_showOnlyDots) {
-            _updateSelectedValue(null);
-          } else if (_showOnlyOneValue) {
-            _updateSelectedValue(availableValues.first);
-          } else if (widget.showNoSelectionDots &&
-              index % (availableValues.length + 1) == 0) {
-            _updateSelectedValue(null);
-          } else {
-            final adjustedIndex = widget.showNoSelectionDots
-                ? (index - 1) % availableValues.length
-                : index % availableValues.length;
-            final value = availableValues[adjustedIndex];
-            _updateSelectedValue(value);
-          }
-        },
-      ),
-    );
-  }
+      );
 
-  Widget _buildDots() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(Icons.circle, size: _selectedValue == null ? 8 : 4),
-        SizedBox(width: 2.0),
-        Icon(Icons.circle, size: _selectedValue == null ? 8 : 4),
-      ],
-    );
-  }
+  Widget _buildDots() => Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.circle, size: _selectedValue == null ? 8 : 4),
+          const SizedBox(width: 2),
+          Icon(Icons.circle, size: _selectedValue == null ? 8 : 4),
+        ],
+      );
 
-  Widget _buildValueWidget(int value) {
-    return Center(
-      child: Text(
-        value.toString().padLeft(2, '0'),
-        style: value == _selectedValue
-            ? widget.selectedTextStyle
-            : widget.nonSelectedTextStyle,
-      ),
-    );
-  }
+  Widget _buildValueWidget(int value) => Center(
+        child: Text(
+          value.toString().padLeft(2, '0'),
+          style: value == _selectedValue
+              ? widget.selectedTextStyle
+              : widget.nonSelectedTextStyle,
+        ),
+      );
 
   void _updateSelectedValue(int? value) {
     setState(() {
@@ -604,15 +585,15 @@ class _MySpinnerNumericPickerState extends State<MySpinnerNumericPicker> {
 /// **************** Digit TextFormField Widget ********************* ///
 ///
 class DigitTfcWidget extends StatefulWidget {
-  final int? digits;
-  final bool shouldDotsOnEmptyTfc;
-  final Function(int? newValue) onInputComplete;
   const DigitTfcWidget({
+    required this.onInputComplete,
     super.key,
     this.digits = 0,
     this.shouldDotsOnEmptyTfc = false,
-    required this.onInputComplete,
   });
+  final int? digits;
+  final bool shouldDotsOnEmptyTfc;
+  final Function(int? newValue) onInputComplete;
 
   @override
   State<DigitTfcWidget> createState() => _DigitTfcWidgetState();
@@ -637,16 +618,20 @@ class _DigitTfcWidgetState extends State<DigitTfcWidget> {
     //initiate the textformfield value
     tfc = TextEditingController(
         text: widget.digits == null
-            ? ".."
+            ? '..'
             : widget.digits! < 10 && widget.digits! >= 0
-                ? "0${widget.digits}"
+                ? '0${widget.digits}'
                 : widget.digits.toString());
 
     // Set the selection to position the cursor at the end of the text
     //(first, ensure the widget is built by using Future.delayed)
     Future.delayed(
       0.sec,
-      () => FocusScope.of(context).requestFocus(myFocusNode),
+      () {
+        if (mounted) {
+          FocusScope.of(context).requestFocus(myFocusNode);
+        }
+      },
     );
   }
 
@@ -672,21 +657,21 @@ class _DigitTfcWidgetState extends State<DigitTfcWidget> {
 
   void _onChanged(String input) {
     //set the inputted value
-    if (input == "") {
+    if (input == '') {
       if (widget.shouldDotsOnEmptyTfc) {
         widget.onInputComplete(null);
         return;
       }
       input = '00';
     }
-    int inputInt = int.parse(input);
+    var inputInt = int.parse(input);
     if (inputInt > 59) {
       inputInt = 0;
     }
 
     //format the tfc
     tfc.text =
-        inputInt < 10 && inputInt >= 0 ? "0$inputInt" : inputInt.toString();
+        inputInt < 10 && inputInt >= 0 ? '0$inputInt' : inputInt.toString();
 
     //return the inputed value to the parent widget
     widget.onInputComplete(inputInt);
@@ -702,44 +687,42 @@ class _DigitTfcWidgetState extends State<DigitTfcWidget> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 90,
-      width: 60,
-      alignment: Alignment.centerLeft,
-      padding: Pad(left: 10, right: 3),
-      decoration: BoxDecoration(
-        color: Colors.blueAccent.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: TextFormField(
-        maxLength: 2,
-        controller: tfc,
-        autofocus: true,
-        focusNode: myFocusNode,
-        cursorColor: Colors.blue.shade800,
-        keyboardType: TextInputType.number,
-
-        decoration: InputDecoration(
-          hintText: "..",
-          counterText: '',
-          suffixIcon: TextFormFieldClearButton(
-            onPressed: () {
-              tfc.clear();
-              _onChanged('');
-            },
-          ),
-          suffixIconConstraints: BoxConstraints.loose(Size.infinite),
-          border: InputBorder.none,
+  Widget build(BuildContext context) => Container(
+        height: 90,
+        width: 60,
+        alignment: Alignment.centerLeft,
+        padding: const Pad(left: 10, right: 3),
+        decoration: BoxDecoration(
+          color: Colors.blueAccent.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(8),
         ),
-        //when keypad "Done" is clicked, or when ENTER is pressed on keyboard
-        onFieldSubmitted: _onChanged,
-        onEditingComplete: () => _onChanged(tfc.text),
-        //when user clicks outside of the textfield, treat it as a submission
-        onTapOutside: (event) {
-          _onChanged(tfc.text);
-        },
-      ),
-    );
-  }
+        child: TextFormField(
+          maxLength: 2,
+          controller: tfc,
+          autofocus: true,
+          focusNode: myFocusNode,
+          cursorColor: Colors.blue.shade800,
+          keyboardType: TextInputType.number,
+
+          decoration: InputDecoration(
+            hintText: '..',
+            counterText: '',
+            suffixIcon: TextFormFieldClearButton(
+              onPressed: () {
+                tfc.clear();
+                _onChanged('');
+              },
+            ),
+            suffixIconConstraints: BoxConstraints.loose(Size.infinite),
+            border: InputBorder.none,
+          ),
+          //when keypad "Done" is clicked, or when ENTER is pressed on keyboard
+          onFieldSubmitted: _onChanged,
+          onEditingComplete: () => _onChanged(tfc.text),
+          //when user clicks outside of the textfield, treat it as a submission
+          onTapOutside: (event) {
+            _onChanged(tfc.text);
+          },
+        ),
+      );
 }

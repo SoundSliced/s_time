@@ -172,7 +172,7 @@ class _TimePickerDemoPageState extends State<TimePickerDemoPage> {
             TimeSpinner(
               initTime: selectedSpinnerTime,
               is24HourFormat: is24HourFormat,
-              am_pmButtonStyle: AmPmButtonStyle(
+              amPmButtonStyle: AmPmButtonStyle(
                 textStyle: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,

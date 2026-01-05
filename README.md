@@ -167,7 +167,7 @@ TimeSpinner(
   spinnerBgColor: const Color(0xFFF5F5F5),
   borderRadius: BorderRadius.circular(16),
   spinnerBorder: Border.all(color: Colors.blue, width: 2),
-  am_pmButtonStyle: AmPmButtonStyle(
+  amPmButtonStyle: AmPmButtonStyle(
     textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
     selectedColor: Colors.blue.withValues(alpha: 0.2),
     borderColor: Colors.blue,
@@ -265,7 +265,7 @@ TimeInput(
 | `borderRadius` | `BorderRadiusGeometry?` | `null` | Border radius of spinner |
 | `spinnerBorder` | `BoxBorder?` | `null` | Border of spinner |
 | `showNoSelectionDots` | `bool` | `true` | Show selection dots |
-| `am_pmButtonStyle` | `AmPmButtonStyle?` | `null` | Custom AM/PM button styling |
+| `amPmButtonStyle` | `AmPmButtonStyle?` | `null` | Custom AM/PM button styling |
 | `onChangedSelectedTime` | `Function(TimeOfDay?)` | Required | Callback when time changes |
 
 ### TimeInput Properties
