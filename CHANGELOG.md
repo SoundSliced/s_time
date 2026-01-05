@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.3]
+
+- TimeSpinner: Fixed dots positioning issue where dots would drift and replace valid numbers
+- TimeSpinner: Fixed scroll inertia issue for smoother scrolling
+- TimeSpinner: Added `isInfiniteScroll` parameter to enable/disable infinite looping
+- TimeSpinner: Fixed `discardedHrValues` logic in 12-hour format to correctly discard hours based on AM/PM period
+
 ## [1.0.2]
 
 - TimeInput: upgraded smart interpretation of partially typed times made by user

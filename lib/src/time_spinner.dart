@@ -59,6 +59,7 @@ class TimeSpinner extends StatefulWidget {
     this.onKeyboardEditing,
     this.showNoSelectionDots = true,
     this.amPmButtonStyle,
+    this.isInfiniteScroll = true,
   });
   // Initialize parameters for the time picker
   final TimeOfDay? initTime; // Initial time value
@@ -82,6 +83,7 @@ class TimeSpinner extends StatefulWidget {
   final List<int> discardedMinValues;
   final bool showNoSelectionDots;
   final AmPmButtonStyle? amPmButtonStyle;
+  final bool isInfiniteScroll;
 
   @override
   State<TimeSpinner> createState() => _TimeSpinnerState();
@@ -100,6 +102,19 @@ class _TimeSpinnerState extends State<TimeSpinner> {
   // Computed values for hr and min values
   List<int>? _effectiveHrValues;
   List<int>? _effectiveMinValues;
+
+  // Helper to calculate discarded hours based on format and AM/PM
+  List<int> get _effectiveDiscardedHrValues {
+    if (widget.is24HourFormat) {
+      return widget.discardedHrValues;
+    }
+
+    final offset = selectedDayPeriod == DayPeriod.pm ? 12 : 0;
+    return widget.discardedHrValues
+        .where((h) => h >= offset && h < offset + 12)
+        .map((h) => h - offset)
+        .toList();
+  }
 
   @override
   void initState() {
@@ -294,8 +309,9 @@ class _TimeSpinnerState extends State<TimeSpinner> {
         borderRadius: widget.borderRadius,
         spinnerBorder: widget.spinnerBorder,
         values: _effectiveHrValues,
-        discardedValues: widget.discardedHrValues,
+        discardedValues: _effectiveDiscardedHrValues,
         showNoSelectionDots: widget.showNoSelectionDots,
+        isInfiniteScroll: widget.isInfiniteScroll,
         onSelectedItemChanged: (value) async {
           setState(() {
             selectedHour = value;
@@ -334,6 +350,7 @@ class _TimeSpinnerState extends State<TimeSpinner> {
         values: _effectiveMinValues,
         discardedValues: widget.discardedMinValues,
         showNoSelectionDots: false,
+        isInfiniteScroll: widget.isInfiniteScroll,
         onSelectedItemChanged: (value) {
           setState(() {
             selectedMinute = value ?? 00;
@@ -373,6 +390,7 @@ class MySpinnerNumericPicker extends StatefulWidget {
     this.discardedValues = const [],
     this.values,
     this.showNoSelectionDots = true,
+    this.isInfiniteScroll = true,
   });
   final int? initValue;
   final int maxValue;
@@ -388,6 +406,7 @@ class MySpinnerNumericPicker extends StatefulWidget {
   final List<int> discardedValues;
   final List<int>? values;
   final bool showNoSelectionDots;
+  final bool isInfiniteScroll;
 
   @override
   State<MySpinnerNumericPicker> createState() => _MySpinnerNumericPickerState();
@@ -399,7 +418,7 @@ class _MySpinnerNumericPickerState extends State<MySpinnerNumericPicker> {
   late List<int> availableValues;
   late bool _showOnlyDots;
   late bool _showOnlyOneValue;
-  static const int loopMultiplier = 1000; // Large number for infinite effect
+  int get _loopMultiplier => widget.isInfiniteScroll ? 1000 : 1;
 
   @override
   void initState() {
@@ -427,6 +446,13 @@ class _MySpinnerNumericPickerState extends State<MySpinnerNumericPicker> {
 
       _selectedValue = widget.initValue ??
           (widget.showNoSelectionDots ? null : availableValues.first);
+
+      // Ensure selected value is valid
+      if (_selectedValue != null && !availableValues.contains(_selectedValue)) {
+        _selectedValue = widget.showNoSelectionDots
+            ? null
+            : (availableValues.isNotEmpty ? availableValues.first : null);
+      }
     } else {
       availableValues = [];
       _selectedValue = null;
@@ -444,14 +470,24 @@ class _MySpinnerNumericPickerState extends State<MySpinnerNumericPicker> {
         (_showOnlyOneValue && widget.showNoSelectionDots) ||
         (widget.showNoSelectionDots && _selectedValue == null)) {
       return 0; // Position of the dots or single value
-    } else if (_selectedValue != null) {
+    }
+
+    final cycleLength =
+        availableValues.length + (widget.showNoSelectionDots ? 1 : 0);
+    final middleBase = _loopMultiplier ~/ 2 * cycleLength;
+
+    if (_selectedValue != null) {
       // Find the index of the initial value in the available values
       final valueIndex = availableValues.indexOf(_selectedValue!);
-      return loopMultiplier ~/ 2 * availableValues.length +
-          (widget.showNoSelectionDots ? 1 : 0) +
-          valueIndex;
+
+      // If value is not found (e.g. it was discarded), default to dots or first item
+      if (valueIndex == -1) {
+        return middleBase;
+      }
+
+      return middleBase + (widget.showNoSelectionDots ? 1 : 0) + valueIndex;
     } else {
-      return loopMultiplier ~/ 2 * availableValues.length;
+      return middleBase;
     }
   }
 
@@ -472,6 +508,12 @@ class _MySpinnerNumericPickerState extends State<MySpinnerNumericPicker> {
       setState(_initializeState);
     } else if (oldWidget.initValue != widget.initValue &&
         widget.initValue != null) {
+      // Check if the new value is different from what we currently have selected locally
+      // If it's the same, it's likely a loopback from the parent update caused by our own scroll
+      if (widget.initValue == _selectedValue) {
+        return;
+      }
+
       // Only initValue changed, update selected value and scroll position
       setState(() {
         _selectedValue = widget.initValue;
@@ -481,7 +523,9 @@ class _MySpinnerNumericPickerState extends State<MySpinnerNumericPicker> {
       // Use addPostFrameCallback to avoid setState during build
       if (_selectedValue != null && availableValues.contains(_selectedValue)) {
         final valueIndex = availableValues.indexOf(_selectedValue!);
-        final targetIndex = loopMultiplier ~/ 2 * availableValues.length +
+        final cycleLength =
+            availableValues.length + (widget.showNoSelectionDots ? 1 : 0);
+        final targetIndex = _loopMultiplier ~/ 2 * cycleLength +
             (widget.showNoSelectionDots ? 1 : 0) +
             valueIndex;
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -518,15 +562,19 @@ class _MySpinnerNumericPickerState extends State<MySpinnerNumericPicker> {
                 return _buildDots();
               } else if (_showOnlyOneValue) {
                 return _buildValueWidget(availableValues.first);
-              } else if (widget.showNoSelectionDots &&
-                  index % (availableValues.length + 1) == 0) {
+              }
+
+              final cycleLength =
+                  availableValues.length + (widget.showNoSelectionDots ? 1 : 0);
+              final indexInCycle = index % cycleLength;
+
+              if (widget.showNoSelectionDots && indexInCycle == 0) {
                 return _buildDots();
               } else {
-                final adjustedIndex = widget.showNoSelectionDots
-                    ? (index - 1) % availableValues.length
-                    : index % availableValues.length;
-                final value = availableValues[adjustedIndex];
-                return _buildValueWidget(value);
+                final valueIndex = widget.showNoSelectionDots
+                    ? indexInCycle - 1
+                    : indexInCycle;
+                return _buildValueWidget(availableValues[valueIndex]);
               }
             },
             childCount: _showOnlyDots
@@ -535,22 +583,26 @@ class _MySpinnerNumericPickerState extends State<MySpinnerNumericPicker> {
                     ? 1
                     : (availableValues.length +
                             (widget.showNoSelectionDots ? 1 : 0)) *
-                        loopMultiplier,
+                        _loopMultiplier,
           ),
           onSelectedItemChanged: (index) {
             if (_showOnlyDots) {
               _updateSelectedValue(null);
             } else if (_showOnlyOneValue) {
               _updateSelectedValue(availableValues.first);
-            } else if (widget.showNoSelectionDots &&
-                index % (availableValues.length + 1) == 0) {
-              _updateSelectedValue(null);
             } else {
-              final adjustedIndex = widget.showNoSelectionDots
-                  ? (index - 1) % availableValues.length
-                  : index % availableValues.length;
-              final value = availableValues[adjustedIndex];
-              _updateSelectedValue(value);
+              final cycleLength =
+                  availableValues.length + (widget.showNoSelectionDots ? 1 : 0);
+              final indexInCycle = index % cycleLength;
+
+              if (widget.showNoSelectionDots && indexInCycle == 0) {
+                _updateSelectedValue(null);
+              } else {
+                final valueIndex = widget.showNoSelectionDots
+                    ? indexInCycle - 1
+                    : indexInCycle;
+                _updateSelectedValue(availableValues[valueIndex]);
+              }
             }
           },
         ),
