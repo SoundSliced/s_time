@@ -481,6 +481,46 @@ void main() {
       expect(find.byType(TimeInput), findsOneWidget);
     });
 
+    testWidgets(
+        'TimeInput with local time and indicator (showLocalIndicator: true)',
+        (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: TimeInput(
+              title: 'Local Time with Indicator',
+              time: DateTime.now(),
+              isUtc: false,
+              showLocalIndicator: true,
+              onSubmitted: (time) {},
+            ),
+          ),
+        ),
+      );
+
+      expect(find.byType(TimeInput), findsOneWidget);
+    });
+
+    testWidgets(
+        'TimeInput with local time without indicator (showLocalIndicator: false)',
+        (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: TimeInput(
+              title: 'Local Time without Indicator',
+              time: DateTime.now(),
+              isUtc: false,
+              showLocalIndicator: false,
+              onSubmitted: (time) {},
+            ),
+          ),
+        ),
+      );
+
+      expect(find.byType(TimeInput), findsOneWidget);
+    });
+
     testWidgets('TimeInput with custom color per title', (tester) async {
       await tester.pumpWidget(
         MaterialApp(

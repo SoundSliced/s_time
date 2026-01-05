@@ -57,6 +57,28 @@ class TimeTextEditingController extends TextEditingController {
   }
 }
 
+/// Helper class to determine timezone suffix for time display
+class TimezoneSuffixHelper {
+  /// Returns the appropriate timezone suffix based on UTC status and user preference
+  ///
+  /// [isUtc] - Whether the time is in UTC
+  /// [showLocalIndicator] - Whether to show 'L' indicator for local time
+  ///
+  /// Returns:
+  /// - ' z' for UTC time
+  /// - ' ʟ' (small capital L) for local time when showLocalIndicator is true
+  /// - '' (empty) for local time when showLocalIndicator is false
+  static String getSuffix(
+      {required bool isUtc, bool showLocalIndicator = false}) {
+    if (isUtc) {
+      return ' z';
+    } else {
+      // Using Unicode small capital L (U+029F) for a visually smaller indicator
+      return showLocalIndicator ? ' ʟ' : '';
+    }
+  }
+}
+
 /// Optimized Time Input Text Field Component
 ///
 /// A specialized text input widget for time entry that provides intuitive user experience
@@ -64,11 +86,12 @@ class TimeTextEditingController extends TextEditingController {
 ///
 /// ## Key Features:
 /// - **Smart Cursor Positioning**: Always places cursor where user taps, even after focus changes
-/// - **Dual Text Modes**: Displays formatted time (HH:MM z) when unfocused, digits-only when focused
+/// - **Dual Text Modes**: Displays formatted time (HH:MM z/L) when unfocused, digits-only when focused
 /// - **Automatic Formatting**: Converts user input to proper time format on focus loss
 /// - **Keyboard Navigation**: Supports Enter (submit) and Escape (revert) keys
 /// - **Input Validation**: Real-time validation with helpful error messages
 /// - **Performance Optimized**: Uses cached regex patterns and efficient character code checks
+/// - **Timezone Display**: Shows 'z' for UTC, 'L' for local (optional), or no suffix by default
 ///
 /// ## Usage:
 /// ```dart
@@ -78,12 +101,14 @@ class TimeTextEditingController extends TextEditingController {
 ///   onSubmitted: (timeOfDay) => print("Selected: $timeOfDay"),
 ///   onChanged: (timeOfDay) => print("Changed: $timeOfDay"), // Optional
 ///   autoFocus: true, // Optional
+///   isUtc: false, // Use local time
+///   showLocalIndicator: true, // Show 'L' for local time
 /// )
 /// ```
 ///
 /// ## Behavior:
 /// 1. **On Focus**: Shows digits-only text (e.g., "1030" for 10:30)
-/// 2. **On Blur**: Shows formatted text (e.g., "10:30 z")
+/// 2. **On Blur**: Shows formatted text (e.g., "10:30 z" for UTC, "10:30 ʟ" or "10:30" for local)
 /// 3. **On Tap**: Positions cursor at equivalent position in digits-only text
 /// 4. **On Enter**: Formats current input and submits
 /// 5. **On Escape**: Reverts to original value and submits
@@ -115,6 +140,7 @@ class TimeInput extends StatefulWidget {
     this.isEmptyWhenTimeNull = false,
     this.showClearButton = false,
     this.focusRole,
+    this.showLocalIndicator = false,
   });
 
   /// The label text displayed above the input field
@@ -153,6 +179,12 @@ class TimeInput extends StatefulWidget {
 
   final bool isEmptyWhenTimeNull, showClearButton;
 
+  /// Whether to show 'ʟ' (small capital L) indicator for local time when isUtc is false
+  /// If false (default), local time is displayed without suffix (e.g., "12:56")
+  /// If true, local time is displayed with 'ʟ' suffix (e.g., "12:56 ʟ")
+  /// UTC time always shows 'z' suffix regardless of this setting
+  final bool showLocalIndicator;
+
   /// Optional role string used to tag the internal FocusNode for traversal policies.
   final String? focusRole;
 
@@ -177,14 +209,17 @@ class _TimeInputState extends State<TimeInput> {
   /// Used to detect focus gain from tap vs programmatic focus changes
   bool _wasUnfocused = true;
 
-  /// Static regex pattern for detecting formatted text (contains ':' or 'z')
+  /// Static regex pattern for detecting formatted text (contains ':', 'z', 'L', or 'ʟ')
   /// Cached for better performance across all widget instances
   // Replaced deprecated RegExp with manual contains checks via helper
   static bool _containsFormatChars(String text) {
-    // return true if any of ':' or 'z' present
+    // return true if any of ':', 'z', 'L', or 'ʟ' (U+029F small capital L) present
     for (var i = 0; i < text.length; i++) {
       final c = text.codeUnitAt(i);
-      if (c == 58 /* ':' */ || c == 122 /* 'z' */) return true;
+      if (c == 58 /* ':' */ ||
+          c == 122 /* 'z' */ ||
+          c == 76 /* 'L' */ ||
+          c == 671 /* 'ʟ' U+029F */) return true;
     }
     return false;
   }
@@ -193,13 +228,15 @@ class _TimeInputState extends State<TimeInput> {
   void initState() {
     super.initState();
 
-    // first, format the given time or now time, to "HH:MM z" for display
+    // first, format the given time or now time, to "HH:MM z/L" or "HH:MM" for display
 
     final initialText = (widget.isEmptyWhenTimeNull && widget.time == null)
         ? ''
         : TimeInputControllers.formatTimeInput(
             (widget.time ?? defaultTime)
                 .convertToStringTime(showSeparatorSymbol: false),
+            isUtc: widget.isUtc,
+            showLocalIndicator: widget.showLocalIndicator,
           );
 
     // then, Initialize controller with formatted time text
@@ -269,7 +306,7 @@ class _TimeInputState extends State<TimeInput> {
   /// - Maintains formatted text if focus gained via tap (handled in _handleTap)
   ///
   /// **On Focus Loss:**
-  /// - Formats the current input text (digits → "HH:MM z")
+  /// - Formats the current input text (digits → "HH:MM z/L" or "HH:MM")
   /// - Triggers onSubmitted callback with parsed TimeOfDay
   /// - Marks widget as unfocused for next interaction
   void _onFocusChange() {
@@ -314,7 +351,7 @@ class _TimeInputState extends State<TimeInput> {
 
   /// Formats current input text and triggers onSubmitted callback
   ///
-  /// Converts digits-only text (e.g., "1030") to formatted text (e.g., "10:30 z")
+  /// Converts digits-only text (e.g., "1030") to formatted text (e.g., "10:30 z", "10:30 L", or "10:30")
   /// and calls the onSubmitted callback with the parsed TimeOfDay.
   /// Uses [_isFormatting] flag to prevent recursive calls.
   void _formatAndNotify() {
@@ -340,8 +377,12 @@ class _TimeInputState extends State<TimeInput> {
       return;
     }
 
-    // then format it to "HH:MM z" for display
-    final timeText = TimeInputControllers.formatTimeInput(tfc.text);
+    // then format it to "HH:MM z/L" or "HH:MM" for display
+    final timeText = TimeInputControllers.formatTimeInput(
+      tfc.text,
+      isUtc: widget.isUtc,
+      showLocalIndicator: widget.showLocalIndicator,
+    );
 
     // Update the controller text while preserving "select all" selections
     if (isSelectAllSelection) {
@@ -409,10 +450,17 @@ class _TimeInputState extends State<TimeInput> {
 
     if (input.isEmpty) {
       input = TimeInputControllers.formatTimeInput(
-          defaultTime.convertToStringTime());
+        defaultTime.convertToStringTime(),
+        isUtc: widget.isUtc,
+        showLocalIndicator: widget.showLocalIndicator,
+      );
     }
 
-    final formattedText = TimeInputControllers.formatTimeInput(input);
+    final formattedText = TimeInputControllers.formatTimeInput(
+      input,
+      isUtc: widget.isUtc,
+      showLocalIndicator: widget.showLocalIndicator,
+    );
     tfc.value = TextEditingValue(
       text: formattedText,
       selection: TextSelection.collapsed(offset: formattedText.length),
@@ -426,7 +474,11 @@ class _TimeInputState extends State<TimeInput> {
   /// formats it, and unfocuses the field.
   void _handleEscapeKey() {
     // Restore original value and format it
-    final formattedText = TimeInputControllers.formatTimeInput(_originalValue);
+    final formattedText = TimeInputControllers.formatTimeInput(
+      _originalValue,
+      isUtc: widget.isUtc,
+      showLocalIndicator: widget.showLocalIndicator,
+    );
     tfc.value = TextEditingValue(
       text: formattedText,
       selection: TextSelection.collapsed(offset: formattedText.length),
@@ -549,7 +601,11 @@ class _TimeInputState extends State<TimeInput> {
     // Only process changes during focus to avoid interference with formatting
     if (_focusNode.hasFocus) {
       final digitsOnly = TimeInputControllers.keepDigitsOnly(input);
-      final formattedInput = TimeInputControllers.formatTimeInput(digitsOnly);
+      final formattedInput = TimeInputControllers.formatTimeInput(
+        digitsOnly,
+        isUtc: widget.isUtc,
+        showLocalIndicator: widget.showLocalIndicator,
+      );
       final tOd = TimeInputControllers.convertToTimeOfDay(
         formattedInput,
         isUtc: widget.isUtc,
@@ -569,6 +625,8 @@ class _TimeInputState extends State<TimeInput> {
         : TimeInputControllers.formatTimeInput(
             (widget.time ?? defaultTime)
                 .convertToStringTime(showSeparatorSymbol: false),
+            isUtc: widget.isUtc,
+            showLocalIndicator: widget.showLocalIndicator,
           );
 
     // Update text when time prop changes
@@ -717,23 +775,36 @@ class TimeInputControllers {
 
   /// Formats time input text into display format
   ///
-  /// Converts digits-only input into formatted time string with "z" suffix.
+  /// Converts digits-only input into formatted time string with appropriate timezone suffix.
   ///
-  /// **Examples:**
+  /// **Examples (UTC):**
   /// - "1" → "01:00 z"
   /// - "12" → "12:00 z"
   /// - "123" → "01:23 z"
   /// - "1234" → "12:34 z"
+  ///
+  /// **Examples (Local with indicator):**
+  /// - "1234" → "12:34 ʟ"
+  ///
+  /// **Examples (Local without indicator):**
+  /// - "1234" → "12:34"
   ///
   /// **Process:**
   /// 1. Remove all non-digit characters
   /// 2. Handle empty input
   /// 3. Pad with zeros to ensure proper formatting
   /// 4. Format based on length (1-4 digits)
+  /// 5. Add appropriate timezone suffix
   ///
   /// [input] - Raw input string (may contain non-digits)
-  /// Returns formatted time string (e.g., "HH:MM z") or empty string
-  static String formatTimeInput(String input) {
+  /// [isUtc] - Whether the time is in UTC (defaults to true)
+  /// [showLocalIndicator] - Whether to show 'L' for local time (defaults to false)
+  /// Returns formatted time string (e.g., "HH:MM z", "HH:MM L", or "HH:MM") or empty string
+  static String formatTimeInput(
+    String input, {
+    bool isUtc = true,
+    bool showLocalIndicator = false,
+  }) {
     // Strip all non-digit characters using cached regex
     input = _removeNonDigits(input);
 
@@ -742,18 +813,24 @@ class TimeInputControllers {
       return '';
     }
 
+    // Get the appropriate suffix
+    final suffix = TimezoneSuffixHelper.getSuffix(
+      isUtc: isUtc,
+      showLocalIndicator: showLocalIndicator,
+    );
+
     // Format based on length
     if (input.length == 1) {
-      return '0${input[0]}:00 z';
+      return '0${input[0]}:00$suffix';
     } else if (input.length == 2) {
-      return '$input:00 z';
+      return '$input:00$suffix';
     } else if (input.length == 3) {
       // For 3 digits, always treat as HH:M0 format
       // First two digits = hours, last digit = tens of minutes
       // (e.g., "011" → "01:10", "114" → "11:40", "234" → "23:40")
-      return '${input.substring(0, 2)}:${input[2]}0 z';
+      return '${input.substring(0, 2)}:${input[2]}0$suffix';
     } else if (input.length >= 4) {
-      return '${input.substring(0, 2)}:${input.substring(2, 4)} z';
+      return '${input.substring(0, 2)}:${input.substring(2, 4)}$suffix';
     }
     return input;
   }
@@ -827,10 +904,10 @@ class TimeInputControllers {
 
   /// Converts formatted time string to TimeOfDay object
   ///
-  /// Parses a formatted time string (e.g., "10:30 z") into a TimeOfDay object.
+  /// Parses a formatted time string (e.g., "10:30 z", "10:30 ʟ", or "10:30") into a TimeOfDay object.
   ///
   /// **Process:**
-  /// 1. Remove "z" suffix and whitespace
+  /// 1. Remove timezone suffix ("z", "L", or "ʟ") and whitespace
   /// 2. Split on colon separator
   /// 3. Parse hours and minutes
   /// 4. Validate ranges (0-23 hours, 0-59 minutes)
@@ -838,10 +915,12 @@ class TimeInputControllers {
   ///
   /// **Examples:**
   /// - "10:30 z" → (TimeOfDay(10, 30), null)
+  /// - "10:30 ʟ" → (TimeOfDay(10, 30), null)
+  /// - "10:30" → (TimeOfDay(10, 30), null)
   /// - "25:00 z" → (null, "Invalid time: 25:00")
   /// - "invalid" → (null, "Invalid format: invalid")
   ///
-  /// [timeString] - Formatted time string with "z" suffix
+  /// [timeString] - Formatted time string with optional timezone suffix
   /// Returns tuple of (TimeOfDay?, String?) where second element is error message
   static TimeOfDay convertToTimeOfDay(String timeString,
       {bool isUtc = true,
@@ -851,8 +930,12 @@ class TimeInputControllers {
     var timeOfDay = TimeOfDay(hour: dfT.hour, minute: dfT.minute);
 
     if (timeString != 'null' && timeString.isNotEmpty) {
-      // Remove the 'z' suffix and trim any whitespace
-      timeString = timeString.replaceAll(' z', '').trim();
+      // Remove timezone suffixes ('z', 'L', or 'ʟ') and trim any whitespace
+      timeString = timeString
+          .replaceAll(' z', '')
+          .replaceAll(' L', '')
+          .replaceAll(' ʟ', '')
+          .trim();
 
       // Split the string into hours and minutes
       final parts = timeString.split(':');

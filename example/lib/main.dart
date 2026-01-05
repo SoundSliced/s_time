@@ -266,7 +266,8 @@ class _TimePickerDemoPageState extends State<TimePickerDemoPage> {
                 _buildExampleToggleButton(3, 'Nullable'),
                 _buildExampleToggleButton(4, 'Default Time'),
                 _buildExampleToggleButton(5, 'Local Time'),
-                _buildExampleToggleButton(6, 'Custom Decoration'),
+                _buildExampleToggleButton(6, 'Local + Indicator'),
+                _buildExampleToggleButton(7, 'Custom Decoration'),
               ],
             ),
             const SizedBox(height: 16),
@@ -414,7 +415,8 @@ class _TimePickerDemoPageState extends State<TimePickerDemoPage> {
       'Auto-focus mode with cursor selection options',
       'Nullable time - can be empty and return null when cleared',
       'Default time fallback - uses 08:00 when input is invalid',
-      'Local time mode - uses local time instead of UTC',
+      'Local time mode - displays time without timezone suffix (e.g., "12:56")',
+      'Local time with indicator - displays time with small "ʟ" suffix (e.g., "12:56 ʟ")',
       'Custom input decoration with custom styles and icons',
     ];
 
@@ -452,6 +454,7 @@ class _TimePickerDemoPageState extends State<TimePickerDemoPage> {
       'Optional Time',
       'Work Start',
       'Local Time',
+      'Local Time',
       'Custom Style'
     ];
     final title = titles[selectedTimeInputExample];
@@ -460,13 +463,14 @@ class _TimePickerDemoPageState extends State<TimePickerDemoPage> {
       width: 120,
       child: TimeInput(
         title: title,
-        time: selectedTimeInputExample == 3 || selectedTimeInputExample == 4
+        time: /* selectedTimeInputExample == 3 || selectedTimeInputExample == 4
             ? null
             : selectedTimeInputExample == 1
                 ? DateTime.now().add(const Duration(hours: 2))
                 : selectedTimeInputExample == 2
                     ? DateTime(2024, 1, 1, 15, 30)
-                    : selectedTextFieldTime?.toDateTime(),
+                    : */
+            selectedTextFieldTime?.toDateTime(),
         colorPerTitle: selectedTimeInputExample == 1
             ? const {'End Time': Colors.teal}
             : null,
@@ -482,8 +486,9 @@ class _TimePickerDemoPageState extends State<TimePickerDemoPage> {
         defaultTime: selectedTimeInputExample == 4
             ? const TimeOfDay(hour: 8, minute: 0)
             : null,
-        isUtc: selectedTimeInputExample != 5,
-        inputDecoration: selectedTimeInputExample == 6
+        isUtc: selectedTimeInputExample != 5 && selectedTimeInputExample != 6,
+        showLocalIndicator: selectedTimeInputExample == 6,
+        inputDecoration: selectedTimeInputExample == 7
             ? InputDecoration(
                 fillColor: Colors.amber[50],
                 filled: true,
