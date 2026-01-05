@@ -463,14 +463,7 @@ class _TimePickerDemoPageState extends State<TimePickerDemoPage> {
       width: 120,
       child: TimeInput(
         title: title,
-        time: /* selectedTimeInputExample == 3 || selectedTimeInputExample == 4
-            ? null
-            : selectedTimeInputExample == 1
-                ? DateTime.now().add(const Duration(hours: 2))
-                : selectedTimeInputExample == 2
-                    ? DateTime(2024, 1, 1, 15, 30)
-                    : */
-            selectedTextFieldTime?.toDateTime(),
+        time: selectedTextFieldTime?.toDateTime(),
         colorPerTitle: selectedTimeInputExample == 1
             ? const {'End Time': Colors.teal}
             : null,

@@ -782,8 +782,34 @@ class TimeInputControllers {
   /// **Examples (UTC):**
   /// - "1" → "01:00 z"
   /// - "12" → "12:00 z"
-  /// - "123" → "01:23 z"
+  /// - "25" → "01:00 z" (hour 25 wraps to 01)
+  /// - "200" → "20:00 z" (HH:M0 format, valid hour)
+  /// - "100" → "10:00 z" (HH:M0 format, valid hour)
+  /// - "230" → "23:00 z" (HH:M0 format, valid hour)
+  /// - "240" → "00:00 z" (hour 24 wraps to 00)
+  /// - "250" → "01:00 z" (hour 25 wraps to 01)
+  /// - "253" → "01:30 z" (hour 25 wraps to 01, M0 = 30)
+  /// - "330" → "03:30 z" (0H:MM format, hour 33 > 25 so use first digit as hour)
+  /// - "300" → "03:00 z" (0H:MM format, hour 30 > 25)
+  /// - "945" → "09:45 z" (0H:MM format, hour 94 > 25)
   /// - "1234" → "12:34 z"
+  /// - "2440" → "00:40 z" (hour 24 wraps to 00)
+  /// - "2530" → "01:30 z" (hour 25 wraps to 01)
+  ///
+  /// **3-digit logic:**
+  /// - If first two digits form a valid hour (0-23), treat as HH:M0 format
+  /// - If first two digits are 24-29, wrap the hour (% 24) and treat as HH:M0 format
+  /// - If first two digits >= 30 and last two digits form valid minutes (0-59), treat as 0H:MM format
+  /// - Otherwise, wrap the hours and use HH:M0 format
+  ///
+  /// **Examples:**
+  /// - "253" → "01:30 z" (hour 25, wrap to 01, M0 = 30)
+  /// - "264" → "02:40 z" (hour 26, wrap to 02, M0 = 40)
+  /// - "297" → "05:70 z" (hour 29, wrap to 05, M0 = 70 - invalid but formatted)
+  ///
+  /// **Hour wrapping:**
+  /// - Hours 24-99 are wrapped using modulo 24 (e.g., 25 → 01, 48 → 00)
+  /// - Applied to 2-digit, 3-digit (hours 24-25), and 4-digit inputs
   ///
   /// **Examples (Local with indicator):**
   /// - "1234" → "12:34 ʟ"
@@ -795,8 +821,9 @@ class TimeInputControllers {
   /// 1. Remove all non-digit characters
   /// 2. Handle empty input
   /// 3. Pad with zeros to ensure proper formatting
-  /// 4. Format based on length (1-4 digits)
-  /// 5. Add appropriate timezone suffix
+  /// 4. Format based on length (1-4 digits) with intelligent 3-digit handling
+  /// 5. Wrap hours > 23 using modulo 24
+  /// 6. Add appropriate timezone suffix
   ///
   /// [input] - Raw input string (may contain non-digits)
   /// [isUtc] - Whether the time is in UTC (defaults to true)
@@ -825,14 +852,45 @@ class TimeInputControllers {
     if (input.length == 1) {
       return '0${input[0]}:00$suffix';
     } else if (input.length == 2) {
-      return '$input:00$suffix';
+      // For 2 digits, treat as hours and wrap if > 23
+      var hours = int.parse(input);
+      if (hours > 23) {
+        hours = hours % 24;
+      }
+      return '${hours.toString().padLeft(2, '0')}:00$suffix';
     } else if (input.length == 3) {
-      // For 3 digits, always treat as HH:M0 format
-      // First two digits = hours, last digit = tens of minutes
-      // (e.g., "011" → "01:10", "114" → "11:40", "234" → "23:40")
-      return '${input.substring(0, 2)}:${input[2]}0$suffix';
+      // For 3 digits, intelligently choose between HH:M0 and 0H:MM formats
+      final hoursAsHHM = int.parse(input.substring(0, 2));
+      final minutesAs0HMM = int.parse(input.substring(1, 3));
+
+      if (hoursAsHHM <= 23) {
+        // Valid hour when treating as HH:M0 format
+        // e.g., "200" → "20:00", "100" → "10:00", "230" → "23:00"
+        return '${input.substring(0, 2)}:${input[2]}0$suffix';
+      } else if (hoursAsHHM <= 29) {
+        // Hours 24-29: wrap the hour and use HH:M0 format
+        // e.g., "240" → "00:00", "253" → "01:30", "264" → "02:40", "297" → "05:70" invalid
+        // For 297, minutes 70 is invalid, but we handle that in validation
+        final wrappedHours = hoursAsHHM % 24;
+        return '${wrappedHours.toString().padLeft(2, '0')}:${input[2]}0$suffix';
+      } else if (minutesAs0HMM <= 59) {
+        // Hours >= 30 with valid minutes: use 0H:MM format
+        // e.g., "330" → "03:30", "300" → "03:00", "945" → "09:45"
+        return '0${input[0]}:${input.substring(1, 3)}$suffix';
+      } else {
+        // Hours >= 30 AND minutes > 59: wrap hours and use HH:M0
+        // e.g., "396" → "15:60" still invalid, but at least hours are wrapped
+        final wrappedHours = hoursAsHHM % 24;
+        return '${wrappedHours.toString().padLeft(2, '0')}:${input[2]}0$suffix';
+      }
     } else if (input.length >= 4) {
-      return '${input.substring(0, 2)}:${input.substring(2, 4)}$suffix';
+      // For 4+ digits, check if hours need wrapping
+      var hours = int.parse(input.substring(0, 2));
+      final minutes = input.substring(2, 4);
+      if (hours > 23) {
+        hours = hours % 24;
+      }
+      return '${hours.toString().padLeft(2, '0')}:$minutes$suffix';
     }
     return input;
   }
@@ -886,13 +944,33 @@ class TimeInputControllers {
     int minutes;
 
     if (input.length == 3) {
-      // For 3 digits: first two are hours, last is tens of minutes
-      // (e.g., "011" → 01:10, "114" → 11:40)
-      hours = int.parse(input.substring(0, 2));
-      minutes = int.parse(input[2]) * 10;
+      // For 3 digits: intelligently choose between HH:M0 and 0H:MM formats
+      final hoursAsHHM = int.parse(input.substring(0, 2));
+      final minutesAs0HMM = int.parse(input.substring(1, 3));
+
+      if (hoursAsHHM <= 23) {
+        // Valid hour when treating as HH:M0 format
+        hours = hoursAsHHM;
+        minutes = int.parse(input[2]) * 10;
+      } else if (hoursAsHHM <= 29) {
+        // Hours 24-29: wrap and use HH:M0 format
+        hours = hoursAsHHM % 24;
+        minutes = int.parse(input[2]) * 10;
+      } else if (minutesAs0HMM <= 59) {
+        // Hours >= 30 with valid minutes: use 0H:MM format
+        hours = int.parse(input[0]);
+        minutes = minutesAs0HMM;
+      } else {
+        // Hours >= 30 AND minutes > 59: wrap hours and use HH:M0
+        hours = hoursAsHHM % 24;
+        minutes = int.parse(input[2]) * 10;
+      }
     } else {
-      // For 4 digits: standard HH:MM format
+      // For 4 digits: standard HH:MM format with hour wrapping
       hours = int.parse(input.substring(0, 2));
+      if (hours > 23) {
+        hours = hours % 24;
+      }
       minutes = int.parse(input.substring(2, 4));
     }
 
