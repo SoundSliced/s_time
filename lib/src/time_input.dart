@@ -97,9 +97,10 @@ class TimeTextEditingController extends TextEditingController {
 /// - Optimized performance with static regex patterns and character code checks
 /// - Cleaner separation of concerns between input and display formatting
 class TimeInput extends StatefulWidget {
-
   const TimeInput({
-    required this.title, required this.onSubmitted, super.key,
+    required this.title,
+    required this.onSubmitted,
+    super.key,
     this.time,
     this.defaultTime,
     this.isUtc = true,
@@ -115,6 +116,7 @@ class TimeInput extends StatefulWidget {
     this.showClearButton = false,
     this.focusRole,
   });
+
   /// The label text displayed above the input field
   final String title;
 
@@ -589,92 +591,97 @@ class _TimeInputState extends State<TimeInput> {
 
   @override
   Widget build(BuildContext context) => Box(
-      height: 80,
-      // alignment: Alignment.center,
-      child: TextFormField(
-        controller: tfc,
-        focusNode: _focusNode,
-        // autofocus: widget.autoFocus, // Using manual focus to control cursor positioning
-        keyboardType: TextInputType.number,
-        inputFormatters: [
-          TimeInputFormatter(),
-        ],
-        textAlign: TextAlign.center,
-        autovalidateMode: AutovalidateMode.onUserInteraction,
-        validator: TimeInputControllers.timeInputValidator,
-        onTap: _handleTap,
-        onTapOutside: _handleTapOutside,
-        onChanged: _handleTextChanged,
-        onFieldSubmitted: (_) => _handleEnterKey(), // Mobile/IME submit path
-        style: TextStyle(
-          fontSize: widget.inputFontSize ?? 16,
-          // color: widget.colorPerTitle?[widget.title] ?? Colors.red.shade800,
+        height: 80,
+        // alignment: Alignment.center,
+        child: TextFormField(
+          controller: tfc,
+          focusNode: _focusNode,
+          // autofocus: widget.autoFocus, // Using manual focus to control cursor positioning
+          keyboardType: TextInputType.number,
+          inputFormatters: [
+            TimeInputFormatter(),
+          ],
+          textAlign: TextAlign.center,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+          validator: TimeInputControllers.timeInputValidator,
+          onTap: _handleTap,
+          onTapOutside: _handleTapOutside,
+          onChanged: _handleTextChanged,
+          onFieldSubmitted: (_) => _handleEnterKey(), // Mobile/IME submit path
+          style: TextStyle(
+            fontSize: widget.inputFontSize ?? 16,
+            // color: widget.colorPerTitle?[widget.title] ?? Colors.red.shade800,
+          ),
+          decoration: widget.inputDecoration ??
+              InputDecoration(
+                fillColor: Colors.white.withValues(alpha: 0.6),
+                filled: true,
+                hintText: '(e.g., 1030)',
+                hintStyle: TextStyle(
+                  color: Colors.grey[400],
+                  fontSize: 12,
+                ),
+                labelText: widget.title,
+                floatingLabelBehavior: FloatingLabelBehavior.always,
+                labelStyle: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: widget.colorPerTitle?[widget.title] ??
+                      Colors.red.shade800,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius:
+                      BorderRadius.circular(widget.borderRadius ?? 12),
+                  borderSide: const BorderSide(
+                    color: Colors.blueAccent,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius:
+                      BorderRadius.circular(widget.borderRadius ?? 12),
+                  borderSide: const BorderSide(
+                    color: Colors.blue,
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius:
+                      BorderRadius.circular(widget.borderRadius ?? 12),
+                  borderSide: BorderSide(
+                    color: Colors.grey[300]!,
+                  ),
+                ),
+                errorBorder: OutlineInputBorder(
+                  borderRadius:
+                      BorderRadius.circular(widget.borderRadius ?? 12),
+                  borderSide: const BorderSide(
+                    color: Colors.red,
+                  ),
+                ),
+                focusedErrorBorder: OutlineInputBorder(
+                  borderRadius:
+                      BorderRadius.circular(widget.borderRadius ?? 12),
+                  borderSide: const BorderSide(
+                    color: Colors.redAccent,
+                  ),
+                ),
+                contentPadding: widget.contentPadding ??
+                    const EdgeInsets.symmetric(vertical: 5, horizontal: 5),
+                suffixIcon: widget.showClearButton
+                    ? TextFormFieldClearButton(onPressed: () {
+                        // Clear the text field and notify with null
+                        tfc.clear();
+                        _formatAndNotify();
+                      })
+                    : null,
+                suffixIconConstraints: widget.showClearButton
+                    ? const BoxConstraints(
+                        minWidth: 20,
+                        minHeight: 20,
+                      )
+                    : null,
+              ),
         ),
-        decoration: widget.inputDecoration ??
-            InputDecoration(
-              fillColor: Colors.white.withValues(alpha: 0.6),
-              filled: true,
-              hintText: '(e.g., 1030)',
-              hintStyle: TextStyle(
-                color: Colors.grey[400],
-                fontSize: 12,
-              ),
-              labelText: widget.title,
-              floatingLabelBehavior: FloatingLabelBehavior.always,
-              labelStyle: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-                color:
-                    widget.colorPerTitle?[widget.title] ?? Colors.red.shade800,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(widget.borderRadius ?? 12),
-                borderSide: const BorderSide(
-                  color: Colors.blueAccent,
-                ),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(widget.borderRadius ?? 12),
-                borderSide: const BorderSide(
-                  color: Colors.blue,
-                ),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(widget.borderRadius ?? 12),
-                borderSide: BorderSide(
-                  color: Colors.grey[300]!,
-                ),
-              ),
-              errorBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(widget.borderRadius ?? 12),
-                borderSide: const BorderSide(
-                  color: Colors.red,
-                ),
-              ),
-              focusedErrorBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(widget.borderRadius ?? 12),
-                borderSide: const BorderSide(
-                  color: Colors.redAccent,
-                ),
-              ),
-              contentPadding: widget.contentPadding ??
-                  const EdgeInsets.symmetric(vertical: 5, horizontal: 5),
-              suffixIcon: widget.showClearButton
-                  ? TextFormFieldClearButton(onPressed: () {
-                      // Clear the text field and notify with null
-                      tfc.clear();
-                      _formatAndNotify();
-                    })
-                  : null,
-              suffixIconConstraints: widget.showClearButton
-                  ? const BoxConstraints(
-                      minWidth: 20,
-                      minHeight: 20,
-                    )
-                  : null,
-            ),
-      ),
-    );
+      );
 }
 
 //********************************* */
