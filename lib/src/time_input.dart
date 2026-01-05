@@ -219,7 +219,9 @@ class _TimeInputState extends State<TimeInput> {
       if (c == 58 /* ':' */ ||
           c == 122 /* 'z' */ ||
           c == 76 /* 'L' */ ||
-          c == 671 /* 'ʟ' U+029F */) return true;
+          c == 671 /* 'ʟ' U+029F */) {
+        return true;
+      }
     }
     return false;
   }
