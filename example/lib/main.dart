@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:s_time/s_time.dart';
 
 void main() {
@@ -463,7 +462,7 @@ class _TimePickerDemoPageState extends State<TimePickerDemoPage> {
       width: 120,
       child: TimeInput(
         title: title,
-        time: selectedTextFieldTime?.toDateTime(),
+        time: selectedTextFieldTime?.toDateTime(DateTime.now()),
         colorPerTitle: selectedTimeInputExample == 1
             ? const {'End Time': Colors.teal}
             : null,

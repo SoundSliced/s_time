@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:s_time/s_time.dart';
 
@@ -6,42 +5,42 @@ void main() {
   group('TimeOfDayExtension', () {
     test('toDateTime converts TimeOfDay to DateTime with default date', () {
       const timeOfDay = TimeOfDay(hour: 14, minute: 30);
-      final dateTime = timeOfDay.toDateTime();
+      final dateTime = timeOfDay.toDateTime(DateTime.now());
 
-      expect(dateTime.hour, 14);
-      expect(dateTime.minute, 30);
+      expect(dateTime?.hour, 14);
+      expect(dateTime?.minute, 30);
     });
 
     test('toDateTime converts TimeOfDay to DateTime with custom date', () {
       const timeOfDay = TimeOfDay(hour: 10, minute: 15);
       final customDate = DateTime(2024, 6, 15);
-      final dateTime = timeOfDay.toDateTime(date: customDate);
+      final dateTime = timeOfDay.toDateTime(customDate);
 
-      expect(dateTime.year, 2024);
-      expect(dateTime.month, 6);
-      expect(dateTime.day, 15);
-      expect(dateTime.hour, 10);
-      expect(dateTime.minute, 15);
+      expect(dateTime?.year, 2024);
+      expect(dateTime?.month, 6);
+      expect(dateTime?.day, 15);
+      expect(dateTime?.hour, 10);
+      expect(dateTime?.minute, 15);
     });
 
     test('toDateTime with isUtc parameter', () {
       const timeOfDay = TimeOfDay(hour: 14, minute: 30);
-      final dateTime = timeOfDay.toDateTime();
+      final dateTime = timeOfDay.toDateTime(DateTime.now(), isUtc: true);
 
-      expect(dateTime.hour, 14);
-      expect(dateTime.minute, 30);
+      expect(dateTime?.hour, 14);
+      expect(dateTime?.minute, 30);
     });
 
     test('toDateTime with both date and isUtc parameters', () {
       const timeOfDay = TimeOfDay(hour: 9, minute: 45);
       final customDate = DateTime.utc(2025, 1, 5);
-      final dateTime = timeOfDay.toDateTime(date: customDate);
+      final dateTime = timeOfDay.toDateTime(customDate);
 
-      expect(dateTime.year, 2025);
-      expect(dateTime.month, 1);
-      expect(dateTime.day, 5);
-      expect(dateTime.hour, 9);
-      expect(dateTime.minute, 45);
+      expect(dateTime?.year, 2025);
+      expect(dateTime?.month, 1);
+      expect(dateTime?.day, 5);
+      expect(dateTime?.hour, 9);
+      expect(dateTime?.minute, 45);
     });
   });
 
