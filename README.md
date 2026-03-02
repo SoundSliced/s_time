@@ -38,7 +38,7 @@ Add this to your package's `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  s_time: ^3.0.0
+  s_time: ^3.1.0
 ```
 
 Then run:
