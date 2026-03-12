@@ -1,11 +1,7 @@
-
-
-# Changelog
-
-All notable changes to this project will be documented in this file.
-
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [3.1.1]
+- `s_packages` dependency upgraded to ^3.4.0
+  - internal `SInkButton` widgets now show the click cursor on web/desktop hover, giving clearer visual feedback that the widget is interactive.
+    - Disabled `SInkButton` widgets keep the basic cursor so non-interactive states remain visually distinct.
 
 
 ## [3.1.0]
